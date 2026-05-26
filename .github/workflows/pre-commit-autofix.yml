@@ -44,10 +44,11 @@ jobs:
           fi
           echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
-          # Match by job name from pre-commit.yml. If that name changes,
-          # update this selector to match.
+          # Reusable workflows show as "caller / callee" in the API,
+          # e.g. "pre-commit / pre-commit (code formatting)". Use contains()
+          # to match regardless of the caller job key prefix.
           JOBS=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/jobs")
-          PRE_COMMIT_CONCLUSION=$(echo "$JOBS" | jq -r '.jobs[] | select(.name == "pre-commit (code formatting)") | .conclusion')
+          PRE_COMMIT_CONCLUSION=$(echo "$JOBS" | jq -r '.jobs[] | select(.name | contains("pre-commit")) | .conclusion')
 
           echo "pre_commit_status=${PRE_COMMIT_CONCLUSION}" >> $GITHUB_OUTPUT
 
