@@ -114,7 +114,7 @@ jobs:
             gh api -X PATCH "repos/${{ github.repository }}/issues/comments/${EXISTING}" \
               -f body="$(cat /tmp/comment_body.md)"
           else
-            gh pr comment "${PR_NUMBER}" --body-file /tmp/comment_body.md
+            gh pr comment "${PR_NUMBER}" -R "${{ github.repository }}" --body-file /tmp/comment_body.md
           fi
 
   # ── Fix pre-commit issues on demand ──
@@ -195,8 +195,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr comment "${{ steps.pr.outputs.number }}" \
-            --body "<!-- pre-commit-fix-bot -->
+          gh api "repos/${{ github.repository }}/issues/${{ steps.pr.outputs.number }}/comments" \
+            -f body="<!-- pre-commit-fix-bot -->
           Only the PR author and repo collaborators can trigger \`/fix-precommit\`."
           exit 1
 
@@ -205,8 +205,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr comment "${{ steps.pr.outputs.number }}" \
-            --body "<!-- pre-commit-fix-bot -->
+          gh api "repos/${{ github.repository }}/issues/${{ steps.pr.outputs.number }}/comments" \
+            -f body="<!-- pre-commit-fix-bot -->
           Can't push fixes to fork branches. Please apply locally:
           \`\`\`bash
           pre-commit run --all-files
@@ -310,7 +310,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Post result comment
-        if: always() && steps.pr.outputs.number
+        if: always() && steps.push.outcome != 'skipped'
         env:
           GH_TOKEN: ${{ github.token }}
           PUSHED: ${{ steps.push.outputs.pushed }}
